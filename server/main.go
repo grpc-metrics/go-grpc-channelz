@@ -7,6 +7,7 @@ import (
 	"github.com/grpc-metrics/go-grpc-channelz/server/proto"
 	"gitlab.bol.io/kvandenbroek/grpcui/standalone"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/channelz/grpc_channelz_v1"
 	"google.golang.org/grpc/channelz/service"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
@@ -17,11 +18,31 @@ import (
 )
 
 type greetServer struct {
+	channelzClient grpc_channelz_v1.ChannelzClient
+
 	proto.UnimplementedGreeterServer
 }
 
-func (s greetServer) SayHello(_ context.Context, request *proto.HelloRequest) (*proto.HelloResponse, error) {
-	return &proto.HelloResponse{Message: "Hello, " + request.Name}, nil
+func newGreetServer() greetServer {
+	cc, err := grpc.Dial(address, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		panic(err)
+	}
+
+	return greetServer{
+		channelzClient: grpc_channelz_v1.NewChannelzClient(cc),
+	}
+}
+
+func (s greetServer) SayHello(ctx context.Context, request *proto.HelloRequest) (*proto.HelloResponse, error) {
+	res, err := s.channelzClient.GetServerSockets(ctx, &grpc_channelz_v1.GetServerSocketsRequest{ServerId: 1})
+	if err != nil {
+		return nil, err
+	}
+
+	return &proto.HelloResponse{
+		Message: fmt.Sprintf("Hello, %s! Server sockets of server 1: %s", request.Name, res.String()),
+	}, nil
 }
 
 const (
@@ -34,7 +55,7 @@ func main() {
 	defer server.GracefulStop()
 
 	reflection.Register(server)
-	proto.RegisterGreeterServer(server, greetServer{})
+	proto.RegisterGreeterServer(server, newGreetServer())
 	service.RegisterChannelzServiceToServer(server)
 
 	listener, err := net.Listen("tcp", address)
