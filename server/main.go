@@ -7,6 +7,7 @@ import (
 	"github.com/grpc-metrics/go-grpc-channelz/server/proto"
 	"gitlab.bol.io/kvandenbroek/grpcui/standalone"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/channelz/service"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
 	"log"
@@ -34,6 +35,7 @@ func main() {
 
 	reflection.Register(server)
 	proto.RegisterGreeterServer(server, greetServer{})
+	service.RegisterChannelzServiceToServer(server)
 
 	listener, err := net.Listen("tcp", address)
 	if err != nil {
