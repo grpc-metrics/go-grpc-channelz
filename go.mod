@@ -11,7 +11,7 @@ require (
 
 require (
 	github.com/beorn7/perks v1.0.1 // indirect
-	github.com/cespare/xxhash/v2 v2.1.2 // indirec
+	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/fullstorydev/grpcurl v1.8.6 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/jhump/protoreflect v1.12.0 // indirect
